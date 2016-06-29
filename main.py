@@ -1,5 +1,5 @@
 from redmine import Redmine
-from datetime import date
+from datetime import date, timedelta
 import constants
 import numpy
 import json
@@ -32,7 +32,7 @@ class TimeTrack(object):
             print("total {} hours".format(summarized_hours))
 
         today = date.today()
-        days = numpy.busday_count(from_date, today)
+        days = numpy.busday_count(from_date, today + timedelta(days = 1))
 
         print("balance: {} hours".format(summarized_hours - days * 8.0))
 
