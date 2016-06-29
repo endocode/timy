@@ -1,6 +1,7 @@
 from redmine import Redmine
 from datetime import date
 import constants
+import numpy
 import json
 
 class TimeTrack(object):
@@ -14,7 +15,7 @@ class TimeTrack(object):
     def get_time_tracks_from(self, from_date):
         current_user = self.redmine.user.get('current')
 
-        time_entries = self.redmine.time_entry.all(limit=100, user_id=current_user.id, from_date=from_date)
+        time_entries = self.redmine.time_entry.all(user_id=current_user.id, from_date=from_date)
         return time_entries
 
     def print_time_tracks_from(self, from_date):
@@ -29,6 +30,11 @@ class TimeTrack(object):
 
         if constants.VERBOSE:
             print("total {} hours".format(summarized_hours))
+
+        today = date.today()
+        days = numpy.busday_count(from_date, today)
+
+        print("balance: {} hours".format(summarized_hours - days * 8.0))
 
 
 if __name__ == "__main__":
