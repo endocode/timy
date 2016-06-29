@@ -1,5 +1,6 @@
 from redmine import Redmine
 from datetime import date
+import constants
 import json
 
 class TimeTrack(object):
@@ -23,9 +24,11 @@ class TimeTrack(object):
 
         for te in time_entries:
             summarized_hours += te.hours
-            print("{} spent on {}".format(te.hours, te.spent_on))
+            if constants.VERBOSE:
+                print("{} spent on {}".format(te.hours, te.spent_on))
 
-        print("total {} hours".format(summarized_hours))
+        if constants.VERBOSE:
+            print("total {} hours".format(summarized_hours))
 
 
 if __name__ == "__main__":
