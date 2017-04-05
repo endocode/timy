@@ -34,12 +34,15 @@ class TimeTrack(object):
         today = date.today()
         days = numpy.busday_count(from_date, today + timedelta(days = 1))
 
-        print("balance: {} hours".format(summarized_hours - days * 8.0))
+        print("balance: {} hours (since: {})".format(summarized_hours - days * 8.0, from_date))
 
 
 if __name__ == "__main__":
     first_of_month = date.today().replace(day=1)
+    first_of_year = date.today().replace(day=1).replace(month=1)
+
 
     timetracker = TimeTrack()
     timetracker.print_time_tracks_from(first_of_month)
+    timetracker.print_time_tracks_from(first_of_year)
 
