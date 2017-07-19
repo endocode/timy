@@ -126,7 +126,9 @@ class CharmTimeTracking(object):
         for te in time_entries:
             summarized_hours += te.hours
             if verbose:
-                print("{}\tspent {} {} hours on {}".format(te.spent_on, te.hours, te.activity, te.comments or ""))
+                if not "comments" in dir(te):
+                    te.comments = ""
+                print("{} spent {} {} hours on {} - {}".format(te.spent_on, te.hours, te.activity, te.project, te.comments))
 
         if verbose:
             print("total {} hours".format(summarized_hours))
