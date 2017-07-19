@@ -51,12 +51,17 @@ class CharmTimeTracking(object):
             print("Dafuq no mapping for task {}".format(elem.attrib["taskid"]))
             sys.exit(1)
 
+    def cache_activities(self):
+        self.activities_map = {}
+        for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
+            self.activities_map[activity.id] = activity.name
 
     def parse_xml(self, source, save=False, ask=False, last_event_id=None):
+        self.cache_activities()
         if not last_event_id:
-            last_event_id = self.last_event_no
+            last_event_id = int(self.last_event_no)
         for event, elem in ET.iterparse(source):
-            if elem.tag == "event" and int(elem.attrib["eventid"]) > last_event_id:
+            if elem.tag == "event" and int(elem.attrib["eventid"]) > int(last_event_id):
                 task_id = elem.attrib["taskid"]
                 event_id = elem.attrib["eventid"]
                 comment = elem.text
@@ -81,29 +86,28 @@ class CharmTimeTracking(object):
                 except KeyError:
                     print("No activity id for taskid {}".format(task_id))
                     sys.exit(2)
-                print("-"*30)
-                print(datetime.strftime(start_date, "%Y-%m-%d"))
-                print(project.name)
-                print("Activity: {}".format(activity_id))
-                print(td)
-
+                print("-"*50)
+                print("Date:\t\t{}".format(datetime.strftime(start_date, "%Y-%m-%d")))
+                print("Project:\t{}".format(project.name))
+                try:
+                    activity = self.activities_map[activity_id]
+                except KeyError:
+                    activity = activity_id
+                print("Activity:\t{}".format(activity))
                 rounded_dec_hours = float("{0:.2f}".format(dec_hours))
+                print("Spent time:\t{}\tdecimal: {}".format(td,rounded_dec_hours))
                 time_entry.hours = rounded_dec_hours
-                print(rounded_dec_hours)
                 if not comment:
                     comment = ""
-                print(comment)
+                print("Comments:\t{}".format(comment))
                 time_entry.comments = comment
-                print("Event id #{}".format(event_id))
+                print("Event id:\t#{}".format(event_id))
                 if save:
                     if ask:
                         answer = input("Submit?")
                         if not answer.lower() in ["y", "yes"]:
                             continue
                     time_entry.save()
-                else:
-                    self.time_tracks.add(time_entry)
-
 
     def print_all_projects(self):
         print("#Project ID\t-\tProject Name".format())
