@@ -143,8 +143,9 @@ def main(arguments):
     ctt = CharmTimeTracking()
     if arguments['list'] and arguments['projects']:
         ctt.print_all_projects()
+    if arguments['list'] and arguments['activities']:
+        ctt.print_activity_ids()
     if arguments['list'] and arguments['timetracks']:
-        ctt.print_time_tracks_from(date.today().replace(day=1, month=1), arguments['--verbose'])
     if arguments['track'] and arguments['<EXPORTFILE>']:
         ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"], arguments["--ask"])
 
