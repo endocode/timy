@@ -5,7 +5,7 @@
 Usage:
   track_charm.py list projects
   track_charm.py list activities
-  track_charm.py list timetracks [--verbose | -v]
+  track_charm.py list timetracks [--verbose | -v] [--days=<days>]
   track_charm.py track <EXPORTFILE> [--no-dry-run|-f] [--last_event_id=<event_id>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
@@ -17,6 +17,7 @@ Options:
   --last_event_id=<event_id>    Skip events until (including) event_id.
   -f --no-dry-run               Actually create time tracks in Redmine.
   -a --ask                      Ask before submitting a time track.
+  --days=<days>                 Print time tracks for the last <days> otherwise print current month
 
 """
 
@@ -146,6 +147,11 @@ def main(arguments):
     if arguments['list'] and arguments['activities']:
         ctt.print_activity_ids()
     if arguments['list'] and arguments['timetracks']:
+        if arguments["--days"]:
+            from_date = date.today() - timedelta(days=int(arguments["--days"]))
+        else:
+            from_date = date.today().replace(day=1)
+        ctt.print_time_tracks_from(from_date, arguments['--verbose'])
     if arguments['track'] and arguments['<EXPORTFILE>']:
         ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"], arguments["--ask"])
 
