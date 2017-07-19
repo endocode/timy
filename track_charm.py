@@ -6,7 +6,7 @@ Usage:
   track_charm.py list projects
   track_charm.py list activities
   track_charm.py list timetracks [--verbose | -v]
-  track_charm.py track <EXPORTFILE> [--no-dry-run|-f] [--last_event_id=<event_id>]
+  track_charm.py track <EXPORTFILE> [--no-dry-run|-f] [--last_event_id=<event_id>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
 
@@ -16,6 +16,7 @@ Options:
   -v --verbose                  Print more information.
   --last_event_id=<event_id>    Skip events until (including) event_id.
   -f --no-dry-run               Actually create time tracks in Redmine.
+  -a --ask                      Ask before submitting a time track.
 
 """
 
@@ -50,7 +51,7 @@ class CharmTimeTracking(object):
             sys.exit(1)
 
 
-    def parse_xml(self, source, save=False):
+    def parse_xml(self, source, save=False, ask=False):
         for event, elem in ET.iterparse(source):
             if elem.tag == "event" and int(elem.attrib["eventid"]) > self.last_event_no:
                 task_id = elem.attrib["taskid"]
@@ -92,6 +93,10 @@ class CharmTimeTracking(object):
                 time_entry.comments = comment
                 print("Event id #{}".format(event_id))
                 if save:
+                    if ask:
+                        answer = input("Submit?")
+                        if not answer.lower() in ["y", "yes"]:
+                            continue
                     time_entry.save()
                 else:
                     self.time_tracks.add(time_entry)
@@ -139,7 +144,7 @@ def main(arguments):
     if arguments['list'] and arguments['timetracks']:
         ctt.print_time_tracks_from(date.today().replace(day=1, month=1), arguments['--verbose'])
     if arguments['track'] and arguments['<EXPORTFILE>']:
-        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"])
+        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"], arguments["--ask"])
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
