@@ -115,7 +115,7 @@ class CharmTimeTracking(object):
     def get_time_tracks_from(self, from_date):
         current_user = self.redmine.user.get('current')
 
-        time_entries = self.redmine.time_entry.all(user_id=current_user.id, from_date=from_date)
+        time_entries = self.redmine.time_entry.all(user_id=current_user.id, from_date=from_date, sort="spent_on")
         return time_entries
 
     def print_time_tracks_from(self, from_date, verbose=False):
@@ -131,12 +131,12 @@ class CharmTimeTracking(object):
                 print("{} spent {} {} hours on {} - {}".format(te.spent_on, te.hours, te.activity, te.project, te.comments))
 
         if verbose:
-            print("total {} hours".format(summarized_hours))
+            print("total {0:.2f} hours".format(summarized_hours))
 
         today = date.today()
         days = numpy.busday_count(from_date, today + timedelta(days = 1))
 
-        print("balance: {} hours (since: {})".format(summarized_hours - days * 8.0, from_date))
+        print("balance: {:.2f} hours (since: {})".format(summarized_hours - days * 8.0, from_date))
 
 
 def main(arguments):
