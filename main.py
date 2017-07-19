@@ -1,4 +1,5 @@
-from redmine import Redmine
+#!/usr/bin/env python
+from redminelib import Redmine
 from datetime import date, timedelta
 import constants
 import numpy
@@ -39,7 +40,7 @@ class TimeTrack(object):
 
 if __name__ == "__main__":
     first_of_month = date.today().replace(day=1)
-    first_of_year = date.today().replace(day=1).replace(month=1)
+    first_of_year = date.today().replace(day=1, month=1)
 
 
     timetracker = TimeTrack()

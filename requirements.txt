@@ -1,2 +1,6 @@
-numpy==1.11.1
-python-redmine==1.5.0
+appdirs==1.4.3
+numpy==1.12.1
+packaging==16.8
+pyparsing==2.2.0
+python-redmine==2.0.2
+six==1.10.0
