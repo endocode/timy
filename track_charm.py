@@ -52,9 +52,11 @@ class CharmTimeTracking(object):
             sys.exit(1)
 
 
-    def parse_xml(self, source, save=False, ask=False):
+    def parse_xml(self, source, save=False, ask=False, last_event_id=None):
+        if not last_event_id:
+            last_event_id = self.last_event_no
         for event, elem in ET.iterparse(source):
-            if elem.tag == "event" and int(elem.attrib["eventid"]) > self.last_event_no:
+            if elem.tag == "event" and int(elem.attrib["eventid"]) > last_event_id:
                 task_id = elem.attrib["taskid"]
                 event_id = elem.attrib["eventid"]
                 comment = elem.text
@@ -153,7 +155,7 @@ def main(arguments):
             from_date = date.today().replace(day=1)
         ctt.print_time_tracks_from(from_date, arguments['--verbose'])
     if arguments['track'] and arguments['<EXPORTFILE>']:
-        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"], arguments["--ask"])
+        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"], arguments["--ask"], arguments["--last_event_id"])
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
