@@ -6,7 +6,7 @@ Usage:
   track_charm.py list projects
   track_charm.py list activities
   track_charm.py list timetracks [--verbose | -v] [--days=<days>]
-  track_charm.py track <EXPORTFILE> [--no-dry-run|-f] [--last_event_id=<event_id>] [--ask | -a]
+  track_charm.py track <EXPORTFILE> [--submit|-S] [--last_event_id=<event_id>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
 
@@ -15,7 +15,7 @@ Options:
   --version                     Show version.
   -v --verbose                  Print more information.
   --last_event_id=<event_id>    Skip events until (including) event_id.
-  -f --no-dry-run               Actually create time tracks in Redmine.
+  -S --submit                   Actually create time tracks in Redmine.
   -a --ask                      Ask before submitting a time track.
   --days=<days>                 Print time tracks for the last <days> otherwise print current month
 
@@ -159,7 +159,7 @@ def main(arguments):
             from_date = date.today().replace(day=1)
         ctt.print_time_tracks_from(from_date, arguments['--verbose'])
     if arguments['track'] and arguments['<EXPORTFILE>']:
-        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--no-dry-run"], arguments["--ask"], arguments["--last_event_id"])
+        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--submit"], arguments["--ask"], arguments["--last_event_id"])
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
