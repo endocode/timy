@@ -137,13 +137,12 @@ class CharmTimeTracking(object):
                     te.comments = ""
                 print("{} spent {} {} hours on {} - {}".format(te.spent_on, te.hours, te.activity, te.project, te.comments))
 
-        if verbose:
-            print("total {0:.2f} hours".format(summarized_hours))
-
         today = date.today()
-        days = numpy.busday_count(from_date, today + timedelta(days = 1))
-
-        print("balance: {:.2f} hours (since: {})".format(summarized_hours - days * 8.0, from_date))
+        work_days = numpy.busday_count(from_date, today + timedelta(days = 1))
+        required_hours = work_days * 8.0
+        if verbose:
+            print("total {:.2f} hours / required {} hours".format(summarized_hours, required_hours))
+        print("balance: {:.2f} hours (since: {} # working days: {})".format(summarized_hours - required_hours, from_date, work_days))
 
 
 def main(arguments):
