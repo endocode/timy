@@ -5,8 +5,8 @@
 Usage:
   track_charm.py list projects
   track_charm.py list activities
-  track_charm.py list timetracks [--verbose | -v] [--days=<days>]
-  track_charm.py track <EXPORTFILE> [--submit|-S] [--last_event_id=<event_id>] [--ask | -a]
+  track_charm.py list timetracks [--verbose | -v] [--days=<days>] [--sumday]
+  track_charm.py track <EXPORTFILE> [--submit|-S] [--start_event_id=<event_id>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
 
@@ -14,7 +14,7 @@ Options:
   -h --help                     Show this screen.
   --version                     Show version.
   -v --verbose                  Print more information.
-  --last_event_id=<event_id>    Skip events until (including) event_id.
+  --start_event_id=<event_id>   Skip events until event_id.
   -S --submit                   Actually create time tracks in Redmine.
   -a --ask                      Ask before submitting a time track.
   --days=<days>                 Print time tracks for the last <days> otherwise print current month
@@ -56,12 +56,12 @@ class CharmTimeTracking(object):
         for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
             self.activities_map[activity.id] = activity.name
 
-    def parse_xml(self, source, save=False, ask=False, last_event_id=None):
+    def parse_xml(self, source, save=False, ask=False, start_event_id=None):
         self.cache_activities()
-        if not last_event_id:
-            last_event_id = int(self.last_event_no)
+        if not start_event_id:
+            start_event_id = int(self.last_event_no) + 1
         for event, elem in ET.iterparse(source):
-            if elem.tag == "event" and int(elem.attrib["eventid"]) > int(last_event_id):
+            if elem.tag == "event" and int(elem.attrib["eventid"]) > int(start_event_id):
                 task_id = elem.attrib["taskid"]
                 event_id = elem.attrib["eventid"]
                 comment = elem.text
@@ -175,9 +175,9 @@ def main(arguments):
             from_date = date.today() - timedelta(days=int(arguments["--days"]))
         else:
             from_date = date.today().replace(day=1)
-        ctt.print_time_tracks_from(from_date, arguments['--verbose'])
+        ctt.print_time_tracks_from(from_date, arguments['--verbose'], arguments["--sumday"])
     if arguments['track'] and arguments['<EXPORTFILE>']:
-        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--submit"], arguments["--ask"], arguments["--last_event_id"])
+        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--submit"], arguments["--ask"], arguments["--start_event_id"])
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
