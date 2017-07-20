@@ -6,7 +6,7 @@ Usage:
   track_charm.py list projects
   track_charm.py list activities
   track_charm.py list timetracks [--verbose | -v] [--days=<days>] [--sumday]
-  track_charm.py track <EXPORTFILE> [--submit|-S] [--starteventid=<event_id> | --startdate=<start_date>] [--enddate=<end_date>] [--ask | -a]
+  track_charm.py track <EXPORTFILE> [--submit|-S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
 
