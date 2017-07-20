@@ -71,7 +71,7 @@ class CharmTimeTracking(object):
                 if start_from_date and start_date < start_from_date:
                     continue
                 if end_at_date and start_date > end_at_date:
-                    break
+                    continue
                 end_date = datetime.strptime(elem.attrib['end'], datetime_fmt)
                 comment = elem.text
                 if comment:
