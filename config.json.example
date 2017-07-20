@@ -1,3 +1,11 @@
 {
-    "api_key": ""
+    "api_key": "YOUR API KEY",
+    "task_project_mapping": {
+        "CHARMTASKID": <REDMINE PROJECT ID>,
+        "OTHERCHARMTASKID": <OTHER REDMINE PROJECT ID>
+    },
+    "task_activity_mapping" : {
+        "CHARMTASKID": <REDMINE ACTIVITY ID>,
+        "OTHERCHARMTASKID": <OTHER REDMINE ACTIVITY ID>
+    }
 }
