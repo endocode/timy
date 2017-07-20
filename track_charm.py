@@ -6,7 +6,7 @@ Usage:
   track_charm.py list projects
   track_charm.py list activities
   track_charm.py list timetracks [--verbose | -v] [--days=<days>] [--sumday]
-  track_charm.py track <EXPORTFILE> [--submit|-S] [--start_event_id=<event_id>] [--ask | -a]
+  track_charm.py track <EXPORTFILE> [--submit|-S] [--starteventid=<event_id> | --startdate=<start_date>] [--enddate=<end_date>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
 
@@ -14,7 +14,9 @@ Options:
   -h --help                     Show this screen.
   --version                     Show version.
   -v --verbose                  Print more information.
-  --start_event_id=<event_id>   Skip events until event_id.
+  --starteventid=<event_id>     Skip events before event_id.
+  --startdate=<start_date>      Skip events before start_date (YYYY-MM-DD)
+  --enddate=<end_date>          Skip events after end_date (YYYY-MM-DD)
   -S --submit                   Actually create time tracks in Redmine.
   -a --ask                      Ask before submitting a time track.
   --days=<days>                 Print time tracks for the last <days> otherwise print current month
@@ -29,6 +31,8 @@ import xml.etree.ElementTree as ET
 import docopt
 
 datetime_fmt = "%Y-%m-%dT%H:%M:%SZ"
+cmdlinedate_fmt = "%Y-%m-%d"
+almost_a_day = 86399
 
 class CharmTimeTracking(object):
 
@@ -56,14 +60,19 @@ class CharmTimeTracking(object):
         for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
             self.activities_map[activity.id] = activity.name
 
-    def parse_xml(self, source, save=False, ask=False, start_event_id=None):
+    def parse_xml(self, source, save=False, ask=False, start_from_date=None, end_at_date=None, start_event_id=1):
         self.cache_activities()
-        if not start_event_id:
-            start_event_id = int(self.last_event_no) + 1
+
         for event, elem in ET.iterparse(source):
-            if elem.tag == "event" and int(elem.attrib["eventid"]) > int(start_event_id):
+            if elem.tag == "event" and int(elem.attrib["eventid"]) > start_event_id:
                 task_id = elem.attrib["taskid"]
                 event_id = elem.attrib["eventid"]
+                start_date = datetime.strptime(elem.attrib['start'], datetime_fmt)
+                if start_from_date and start_date < start_from_date:
+                    continue
+                if end_at_date and start_date > end_at_date:
+                    break
+                end_date = datetime.strptime(elem.attrib['end'], datetime_fmt)
                 comment = elem.text
                 if comment:
                     comment = comment.strip()
@@ -73,8 +82,6 @@ class CharmTimeTracking(object):
                     self.cache_project(task_id)
 
                 project = self.project_cache[task_id]
-                start_date = datetime.strptime(elem.attrib['start'], datetime_fmt)
-                end_date = datetime.strptime(elem.attrib['end'], datetime_fmt)
                 td = end_date - start_date
                 dec_hours = td.seconds/60.0/60.0
                 time_entry = self.redmine.time_entry.new()
@@ -177,7 +184,14 @@ def main(arguments):
             from_date = date.today().replace(day=1)
         ctt.print_time_tracks_from(from_date, arguments['--verbose'], arguments["--sumday"])
     if arguments['track'] and arguments['<EXPORTFILE>']:
-        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--submit"], arguments["--ask"], arguments["--start_event_id"])
+        kwargs = {}
+        if arguments["--startdate"]:
+            kwargs["start_from_date"] = datetime.strptime(arguments["--startdate"], cmdlinedate_fmt)
+        if arguments["--enddate"]:
+            kwargs["end_at_date"] = datetime.strptime(arguments["--enddate"], cmdlinedate_fmt) + timedelta(seconds=almost_a_day)
+        if arguments["--starteventid"]:
+            kwargs["start_event_id"] = int(arguments["--starteventid"])
+        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--submit"], arguments["--ask"], **kwargs)
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
