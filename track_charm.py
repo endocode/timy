@@ -125,17 +125,29 @@ class CharmTimeTracking(object):
         time_entries = self.redmine.time_entry.all(user_id=current_user.id, from_date=from_date, sort="spent_on")
         return time_entries
 
-    def print_time_tracks_from(self, from_date, verbose=False):
+    def print_time_tracks_from(self, from_date, verbose=False, sumday=False):
         summarized_hours = 0
 
         time_entries = self.get_time_tracks_from(from_date)
 
+        self.current_day = time_entries[0].spent_on
+        self.day_hours = 0.0
+
         for te in time_entries:
+            if verbose and sumday and te.spent_on > self.current_day:
+                self.print_daily_totals()
+                self.next_day(te.spent_on)
+
             summarized_hours += te.hours
+            self.day_hours += te.hours
             if verbose:
                 if not "comments" in dir(te):
                     te.comments = ""
                 print("{} spent {} {} hours on {} - {}".format(te.spent_on, te.hours, te.activity, te.project, te.comments))
+
+        # sum up on last time entry
+        if self.day_hours > 0.0:
+            self.print_daily_totals()
 
         today = date.today()
         work_days = numpy.busday_count(from_date, today + timedelta(days = 1))
@@ -143,6 +155,13 @@ class CharmTimeTracking(object):
         if verbose:
             print("total {:.2f} hours / required {} hours".format(summarized_hours, required_hours))
         print("balance: {:.2f} hours (since: {} # working days: {})".format(summarized_hours - required_hours, from_date, work_days))
+
+    def next_day(self, date):
+        self.current_day = date
+        self.day_hours = 0.0
+
+    def print_daily_totals(self):
+        print("{} totals {:.2f} hours".format(self.current_day, self.day_hours))
 
 
 def main(arguments):
