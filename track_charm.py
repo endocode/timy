@@ -150,7 +150,8 @@ class CharmTimeTracking(object):
                 self.next_day(te.spent_on)
 
             summarized_hours += te.hours
-            self.day_hours += te.hours
+            if sumday:
+                self.day_hours += te.hours
             if verbose:
                 if not "comments" in dir(te):
                     te.comments = ""
