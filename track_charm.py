@@ -127,7 +127,6 @@ class CharmTimeTracking(object):
 
     def get_time_tracks_from(self, dates):
         current_user = self.redmine.user.get('current')
-        print(dates)
 
         time_entries = self.redmine.time_entry.all(user_id=current_user.id, sort="spent_on", **dates)
         return time_entries
