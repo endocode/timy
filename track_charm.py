@@ -5,7 +5,7 @@
 Usage:
   track_charm.py list projects
   track_charm.py list activities
-  track_charm.py list timetracks [--verbose | -v] [--days=<days>] [--sumday]
+  track_charm.py list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday]
   track_charm.py track <EXPORTFILE> [--submit|-S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--ask | -a]
   track_charm.py (-h | --help)
   track_charm.py --version
@@ -108,7 +108,7 @@ class CharmTimeTracking(object):
                 print("Comments:\t{}".format(comment))
                 time_entry.comments = comment
                 print("Event id:\t#{}".format(event_id))
-                if save:
+                if submit:
                     if ask:
                         answer = input("Submit?")
                         if not answer.lower() in ["y", "yes"]:
@@ -125,16 +125,21 @@ class CharmTimeTracking(object):
         for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
             print(activity.id, activity.name)
 
-    def get_time_tracks_from(self, from_date):
+    def get_time_tracks_from(self, dates):
         current_user = self.redmine.user.get('current')
+        print(dates)
 
-        time_entries = self.redmine.time_entry.all(user_id=current_user.id, from_date=from_date, sort="spent_on")
+        time_entries = self.redmine.time_entry.all(user_id=current_user.id, sort="spent_on", **dates)
         return time_entries
 
-    def print_time_tracks_from(self, from_date, verbose=False, sumday=False):
+    def print_time_tracks_from(self, dates, to_date=None, verbose=False, sumday=False):
         summarized_hours = 0
+        if not dates["from_date"]:
+            return
 
-        time_entries = self.get_time_tracks_from(from_date)
+        from_date = dates["from_date"]
+
+        time_entries = self.get_time_tracks_from({k:v for k,v in dates.items() if k.endswith("_date")})
 
         self.current_day = time_entries[0].spent_on
         self.day_hours = 0.0
@@ -155,8 +160,11 @@ class CharmTimeTracking(object):
         if self.day_hours > 0.0:
             self.print_daily_totals()
 
-        today = date.today()
-        work_days = numpy.busday_count(from_date, today + timedelta(days = 1))
+        if dates["to_date"]:
+            to_day = dates["to_date"]
+        else:
+            to_day = date.today()
+        work_days = numpy.busday_count(from_date, to_day + timedelta(days = 1))
         required_hours = work_days * 8.0
         if verbose:
             print("total {:.2f} hours / required {} hours".format(summarized_hours, required_hours))
@@ -174,14 +182,26 @@ def main(arguments):
     ctt = CharmTimeTracking()
     if arguments['list'] and arguments['projects']:
         ctt.print_all_projects()
+
     if arguments['list'] and arguments['activities']:
         ctt.print_activity_ids()
+
     if arguments['list'] and arguments['timetracks']:
+        dates = {}
         if arguments["--days"]:
-            from_date = date.today() - timedelta(days=int(arguments["--days"]))
+            dates["from_date"] = date.today() - timedelta(days=int(arguments["--days"]))
         else:
-            from_date = date.today().replace(day=1)
-        ctt.print_time_tracks_from(from_date, arguments['--verbose'], arguments["--sumday"])
+            if arguments["--startdate"]:
+                dates["from_date"] = datetime.strptime(arguments["--startdate"], cmdlinedate_fmt).date()
+            else:
+                dates["from_date"] = date.today().replace(day=1)
+        if arguments["--enddate"]:
+            dates["to_date"] = datetime.strptime(arguments["--enddate"], cmdlinedate_fmt).date()
+        kwargs = {}
+        kwargs["verbose"] = arguments["--verbose"]
+        kwargs["sumday"] = arguments["--sumday"]
+        ctt.print_time_tracks_from(dates, **kwargs)
+
     if arguments['track'] and arguments['<EXPORTFILE>']:
         kwargs = {}
         if arguments["--startdate"]:
@@ -190,7 +210,9 @@ def main(arguments):
             kwargs["end_at_date"] = datetime.strptime(arguments["--enddate"], cmdlinedate_fmt) + timedelta(seconds=almost_a_day)
         if arguments["--starteventid"]:
             kwargs["start_event_id"] = int(arguments["--starteventid"])
-        ctt.parse_xml(arguments["<EXPORTFILE>"], arguments["--submit"], arguments["--ask"], **kwargs)
+        kwargs["submit"] = arguments["--submit"]
+        kwargs["ask"] = arguments["--ask"]
+        ctt.parse_xml(arguments["<EXPORTFILE>"], **kwargs)
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
