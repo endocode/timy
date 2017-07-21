@@ -161,9 +161,9 @@ class CharmTimeTracking(object):
         if self.day_hours > 0.0:
             self.print_daily_totals()
 
-        if dates["to_date"]:
+        try:
             to_day = dates["to_date"]
-        else:
+        except KeyError:
             to_day = date.today()
         work_days = numpy.busday_count(from_date, to_day + timedelta(days = 1))
         required_hours = work_days * 8.0
