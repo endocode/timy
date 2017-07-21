@@ -46,7 +46,7 @@ class CharmTimeTracking(object):
             self.project_cache = {}
             self.time_tracks = []
 
-    def cache_project(self, task_id):
+    def __cache_project(self, task_id):
         try:
             tracker_project_id = self.task_project_mapping[task_id]
             self.project_cache[task_id] = self.redmine.project.get(tracker_project_id)
@@ -54,13 +54,13 @@ class CharmTimeTracking(object):
             print("Dafuq no mapping for task {}".format(elem.attrib["taskid"]))
             sys.exit(1)
 
-    def cache_activities(self):
+    def __cache_activities(self):
         self.activities_map = {}
         for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
             self.activities_map[activity.id] = activity.name
 
-    def parse_xml(self, source, save=False, ask=False, start_from_date=None, end_at_date=None, start_event_id=1):
-        self.cache_activities()
+    def parse_xml(self, source, submit=False, ask=False, start_from_date=None, end_at_date=None, start_event_id=1):
+        self.__cache_activities()
 
         for event, elem in ET.iterparse(source):
             if elem.tag == "event" and int(elem.attrib["eventid"]) > start_event_id:
@@ -78,7 +78,7 @@ class CharmTimeTracking(object):
                 try:
                     self.project_cache[task_id]
                 except KeyError:
-                    self.cache_project(task_id)
+                    self.__cache_project(task_id)
 
                 project = self.project_cache[task_id]
                 td = end_date - start_date
