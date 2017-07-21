@@ -43,7 +43,6 @@ class CharmTimeTracking(object):
             self.redmine = Redmine('https://tracker.endocode.com', key=self.redmine_api_access_key)
             self.task_project_mapping = d["task_project_mapping"]
             self.task_activity_mapping = d["task_activity_mapping"]
-            self.last_event_no = d["last_event_no"]
             self.project_cache = {}
             self.time_tracks = []
 
