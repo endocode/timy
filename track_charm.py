@@ -63,7 +63,7 @@ class CharmTimeTracking(object):
         self.__cache_activities()
 
         for event, elem in ET.iterparse(source):
-            if elem.tag == "event" and int(elem.attrib["eventid"]) > start_event_id:
+            if elem.tag == "event" and int(elem.attrib["eventid"]) >= start_event_id:
                 task_id = elem.attrib["taskid"]
                 event_id = elem.attrib["eventid"]
                 start_date = datetime.strptime(elem.attrib['start'], datetime_fmt)
