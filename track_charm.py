@@ -282,7 +282,7 @@ class CharmTimeTracking(object):
         self.day_hours = 0.0
 
     def print_daily_totals(self):
-        print("{} totals {:.2f} hours".format(self.current_day, self.day_hours))
+        print("{} totals {:.2f} hours\n".format(self.current_day, self.day_hours))
 
 
 def main(arguments):
