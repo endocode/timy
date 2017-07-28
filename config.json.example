@@ -7,5 +7,6 @@
     "task_activity_mapping" : {
         "CHARMTASKID": <REDMINE ACTIVITY ID>,
         "OTHERCHARMTASKID": <OTHER REDMINE ACTIVITY ID>
-    }
+    },
+    "db_path": "/home/USERNAME/.local/share/KDAB/Charm/Charm.db"
 }
