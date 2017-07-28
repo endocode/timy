@@ -263,7 +263,7 @@ class CharmTimeTracking(object):
                 print("{} spent {} {} hours on {} - {}".format(te.spent_on, te.hours, te.activity, te.project, te.comments))
 
         # sum up on last time entry
-        if self.day_hours > 0.0:
+        if self.day_hours > 0.0 and self.verbose:
             self.print_daily_totals()
 
         if self.end_at_date:
