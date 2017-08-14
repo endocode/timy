@@ -25,6 +25,7 @@ Options:
 """
 
 from redminelib import Redmine
+from redminelib.exceptions import ResourceSetIndexError
 from datetime import date, timedelta, datetime
 import numpy
 import json
@@ -246,7 +247,12 @@ class CharmTimeTracking(object):
         current_user = self.redmine.user.get('current')
         time_entries = self.redmine.time_entry.all(user_id=current_user.id, sort="spent_on", from_date=self.start_from_date, to_date=self.end_at_date)
 
-        self.current_day = time_entries[0].spent_on
+        try:
+            self.current_day = time_entries[0].spent_on
+        except ResourceSetIndexError:
+            print("Unable to retrive time tracks from {} to {}".format(self.start_from_date, self.end_at_date))
+            return
+
         self.day_hours = 0.0
 
         for te in time_entries:
