@@ -25,7 +25,7 @@ Options:
 """
 
 from redminelib import Redmine
-from redminelib.exceptions import ResourceSetIndexError
+from redminelib.exceptions import ResourceSetIndexError, ValidationError
 from datetime import date, timedelta, datetime
 import numpy
 import json
@@ -229,7 +229,11 @@ class CharmTimeTracking(object):
                     answer = input("Submit?")
                     if not answer.lower() in ["y", "yes"]:
                         return
-                time_entry.save()
+                try:
+                    time_entry.save()
+                except ValidationError as e:
+                    print("Could not save the time entry #{} because [{}]".format(event_id, e))
+                    sys.exit(4)
 
     def print_all_projects(self):
         print("#Project ID\t-\tProject Name".format())
