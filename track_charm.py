@@ -35,7 +35,7 @@ import sys
 datetime_fmt = "%Y-%m-%dT%H:%M:%SZ"
 cmdlinedate_fmt = "%Y-%m-%d"
 almost_a_day = 86399
-sqlite_date_fmt = "%Y-%m-%dT%H:%M:%S.%f"
+sqlite_date_fmt = "%Y-%m-%dT%H:%M:%S"
 
 class CharmTimeTracking(object):
 
@@ -162,8 +162,10 @@ class CharmTimeTracking(object):
 
                 task_id = row['task']
                 event_id = row['event_id']
-                start_date = datetime.strptime(row['start'], sqlite_date_fmt)
-                end_date = datetime.strptime(row['end'], sqlite_date_fmt)
+                # Sometimes milliseconds are included in the timestamps. 
+                # Remove them as they are not used anyway.
+                start_date = datetime.strptime(row['start'].replace(".000", ""), sqlite_date_fmt)
+                end_date = datetime.strptime(row['end'].replace(".000", ""), sqlite_date_fmt)
                 comment = row['comment']
                 self.__process_event(event_id, task_id, start_date, end_date, comment)
 
