@@ -108,8 +108,10 @@ class CharmTimeTracking(object):
             d = json.load(config_json)
             self.redmine_api_access_key = d["api_key"]
             self.redmine = Redmine('https://tracker.endocode.com', key=self.redmine_api_access_key)
-            self.task_project_mapping = d["task_project_mapping"]
-            self.task_activity_mapping = d["task_activity_mapping"]
+
+            if not arguments['list']:
+                self.task_project_mapping = d["task_project_mapping"]
+                self.task_activity_mapping = d["task_activity_mapping"]
 
             if arguments['trackdb'] and not self.db_path:
                 try:
