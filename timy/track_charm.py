@@ -3,13 +3,13 @@
 """Charm2RedmineTT
 
 Usage:
-  track_charm.py list projects
-  track_charm.py list activities
-  track_charm.py list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday]
-  track_charm.py trackxml <EXPORTFILE> [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
-  track_charm.py trackdb [DBFILE] [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
-  track_charm.py (-h | --help)
-  track_charm.py --version
+  timy list projects
+  timy list activities
+  timy list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday]
+  timy trackxml <EXPORTFILE> [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
+  timy trackdb [DBFILE] [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
+  timy (-h | --help)
+  timy --version
 
 Options:
   -h --help                     Show this screen.
@@ -27,6 +27,7 @@ Options:
 from redminelib import Redmine
 from redminelib.exceptions import ResourceSetIndexError, ValidationError
 from datetime import date, timedelta, datetime
+from os.path import expanduser, join
 import numpy
 import json
 import docopt
@@ -101,7 +102,9 @@ class CharmTimeTracking(object):
 
             self.processing_func = self.parse_db
 
-        with open("./config.json", "r") as config_json:
+        home_dir = expanduser("~")
+        config_file = join(home_dir, ".timy.conf")
+        with open(config_file, "r") as config_json:
             d = json.load(config_json)
             self.redmine_api_access_key = d["api_key"]
             self.redmine = Redmine('https://tracker.endocode.com', key=self.redmine_api_access_key)
@@ -297,10 +300,10 @@ class CharmTimeTracking(object):
         print("{} totals {:.2f} hours\n".format(self.current_day, self.day_hours))
 
 
-def main(arguments):
+def main():
+    arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
     ctt = CharmTimeTracking(arguments)
     ctt.processing_func()
 
 if __name__ == "__main__":
-    arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
-    main(arguments)
+    main()
