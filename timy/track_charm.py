@@ -5,7 +5,8 @@
 Usage:
   timy list projects
   timy list activities
-  timy list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday]
+  timy list users
+  timy list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday] [--user=<userid>]
   timy trackxml <EXPORTFILE> [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
   timy trackdb [DBFILE] [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
   timy (-h | --help)
@@ -21,6 +22,7 @@ Options:
   -S --submit                   Actually create time tracks in Redmine.
   -n --no-ask                   Don't ask before submitting a time track.
   --days=<days>                 Print time tracks for the last <days> otherwise print current month
+  --user=<username>             Act as <username>
 
 """
 
@@ -49,12 +51,16 @@ class CharmTimeTracking(object):
         self.db_path = None
         self.submit = False
         self.ask = True
+        self.user = int(arguments["--user"]) if arguments["--user"] else "current"
 
         if arguments['list'] and arguments['projects']:
             self.processing_func = self.print_all_projects
 
         if arguments['list'] and arguments['activities']:
             self.processing_func = self.print_activity_ids
+
+        if arguments['list'] and arguments['users']:
+            self.processing_func = self.print_all_users
 
         if arguments['list'] and arguments['timetracks']:
             if arguments["--days"]:
@@ -248,6 +254,12 @@ class CharmTimeTracking(object):
         for project in self.redmine.project.all():
             print("#{}\t\t-\t{}".format(project.id, project.name))
 
+    def print_all_users(self):
+        print("#User ID\t-\tName".format())
+        print("="*80)
+        for user in self.redmine.user.all():
+            print("#{}\t\t-\t{} {}".format(user.id, user.firstname, user.lastname))
+
     def print_activity_ids(self):
         for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
             print(activity.id, activity.name)
@@ -255,7 +267,8 @@ class CharmTimeTracking(object):
     def print_time_tracks_from(self):
         summarized_hours = 0
 
-        current_user = self.redmine.user.get('current')
+        current_user = self.redmine.user.get(self.user)
+        print("Time tracks for user {} {}".format(current_user.firstname, current_user.lastname))
         time_entries = self.redmine.time_entry.all(user_id=current_user.id, sort="spent_on", from_date=self.start_from_date, to_date=self.end_at_date)
 
         try:
@@ -300,7 +313,6 @@ class CharmTimeTracking(object):
 
     def print_daily_totals(self):
         print("{} totals {:.2f} hours\n".format(self.current_day, self.day_hours))
-
 
 def main():
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
