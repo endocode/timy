@@ -3,10 +3,10 @@
 """Charm2RedmineTT
 
 Usage:
-  timy list projects
+  timy list projects [--format=<json>]
   timy list activities
-  timy list users
-  timy list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday] [--user=<userid>]
+  timy list users [--format=<json>]
+  timy list timetracks [--verbose | -v] [--days=<days> | --startdate=<start_date>] [--enddate=<end_date>] [--sumday] [--user=<userid>] [--format=<json>]
   timy trackxml <EXPORTFILE> [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
   timy trackdb [DBFILE] [--submit | -S] [--starteventid=<event_id>] [--startdate=<start_date>] [--enddate=<end_date>] [--no-ask | -n]
   timy (-h | --help)
@@ -34,11 +34,13 @@ import numpy
 import json
 import docopt
 import sys
+import pandas as pd
 
 datetime_fmt = "%Y-%m-%dT%H:%M:%SZ"
 cmdlinedate_fmt = "%Y-%m-%d"
 almost_a_day = 86399
 sqlite_date_fmt = "%Y-%m-%dT%H:%M:%S"
+
 
 class CharmTimeTracking(object):
 
@@ -51,6 +53,7 @@ class CharmTimeTracking(object):
         self.db_path = None
         self.submit = False
         self.ask = True
+        self.format = str(arguments["--format"]) if arguments["--format"] else "simple"
         self.user = int(arguments["--user"]) if arguments["--user"] else "current"
 
         if arguments['list'] and arguments['projects']:
@@ -168,12 +171,12 @@ class CharmTimeTracking(object):
             while True:
                 row = cur.fetchone()
 
-                if row == None:
+                if row is None:
                     break
 
                 task_id = row['task']
                 event_id = row['event_id']
-                # Sometimes milliseconds are included in the timestamps. 
+                # Sometimes milliseconds are included in the timestamps.
                 # Remove them as they are not used anyway.
                 start_date = datetime.strptime(row['start'].replace(".000", ""), sqlite_date_fmt)
                 end_date = datetime.strptime(row['end'].replace(".000", ""), sqlite_date_fmt)
@@ -230,7 +233,7 @@ class CharmTimeTracking(object):
                 activity = activity_id
             print("Activity:\t{}".format(activity))
             rounded_dec_hours = float("{0:.2f}".format(dec_hours))
-            print("Spent time:\t{}\tdecimal: {}".format(td,rounded_dec_hours))
+            print("Spent time:\t{}\tdecimal: {}".format(td, rounded_dec_hours))
             time_entry.hours = rounded_dec_hours
             if not comment:
                 comment = ""
@@ -249,16 +252,30 @@ class CharmTimeTracking(object):
                     sys.exit(4)
 
     def print_all_projects(self):
-        print("#Project ID\t-\tProject Name".format())
-        print("="*80)
-        for project in self.redmine.project.all():
-            print("#{}\t\t-\t{}".format(project.id, project.name))
+        if self.format == "simple":
+            print("#Project ID\t-\tProject Name".format())
+            print("="*80)
+            for project in self.redmine.project.all():
+                print("#{}\t\t-\t{}".format(project.id, project.name))
+        elif self.format == "json":
+            projs = []
+            for project in self.redmine.project.all():
+                projs.append({'id': project.id, 'name': project.name})
+            print(json.dumps(projs))
 
     def print_all_users(self):
-        print("#User ID\t-\tName".format())
-        print("="*80)
-        for user in self.redmine.user.all():
-            print("#{}\t\t-\t{} {}".format(user.id, user.firstname, user.lastname))
+        if self.format == "simple":
+            print("#User ID\t-\tName".format())
+            print("="*80)
+            for user in self.redmine.user.all():
+                print("#{}\t\t-\t{} {}".format(user.id, user.firstname, user.lastname))
+        elif self.format == "json":
+            users = []
+            for user in self.redmine.user.all():
+                    users.append({'id': user.id,
+                                  'name': user.firstname +
+                                  " " + user.lastname})
+            print(json.dumps(users))
 
     def print_activity_ids(self):
         for activity in self.redmine.enumeration.filter(resource='time_entry_activities'):
@@ -268,9 +285,7 @@ class CharmTimeTracking(object):
         summarized_hours = 0
 
         current_user = self.redmine.user.get(self.user)
-        print("Time tracks for user {} {}".format(current_user.firstname, current_user.lastname))
         time_entries = self.redmine.time_entry.all(user_id=current_user.id, sort="spent_on", from_date=self.start_from_date, to_date=self.end_at_date)
-
         try:
             self.current_day = time_entries[0].spent_on
         except ResourceSetIndexError:
@@ -279,7 +294,9 @@ class CharmTimeTracking(object):
 
         self.day_hours = 0.0
 
+        worked_days = {}
         for te in time_entries:
+            worked_days[str(te.spent_on)] = "1"
             if self.verbose and self.sumday and te.spent_on > self.current_day:
                 self.print_daily_totals()
                 self.next_day(te.spent_on)
@@ -288,7 +305,7 @@ class CharmTimeTracking(object):
             if self.sumday:
                 self.day_hours += te.hours
             if self.verbose:
-                if not "comments" in dir(te):
+                if "comments" not in dir(te):
                     te.comments = ""
                 print("{} spent {} {} hours on {} - {}".format(te.spent_on, te.hours, te.activity, te.project, te.comments))
 
@@ -300,24 +317,39 @@ class CharmTimeTracking(object):
             to_day = self.end_at_date
         else:
             to_day = date.today()
+        work_days=pd.bdate_range(start=self.start_from_date,end=to_day)
+        missing_days = []
+        for day in work_days:
+            if day.strftime('%Y-%m-%d') not in worked_days.keys():
+                missing_days.append(day.strftime('%Y-%m-%d'))
+        required_hours = len(work_days) * 8.0
 
-        work_days = numpy.busday_count(self.start_from_date, to_day + timedelta(days = 1))
-        required_hours = work_days * 8.0
-        if self.verbose:
-            print("total {:.2f} hours / required {} hours".format(summarized_hours, required_hours))
-        print("balance: {:.2f} hours (since: {} # working days: {})".format(summarized_hours - required_hours, self.start_from_date, work_days))
+        if self.format == "simple":
+            print("Time tracks for user {} {}".format(current_user.firstname, current_user.lastname))
+            if self.verbose:
+                print("total {:.2f} hours / required {} hours".format(summarized_hours, required_hours))
+            print("balance: {:.2f} hours (since: {} # working days: {})".format(summarized_hours - required_hours,
+                  self.start_from_date, len(work_days)))
+        elif self.format == "json":
+            print(json.dumps({'missing_hours': summarized_hours - required_hours,
+                              'start_date': self.start_from_date.strftime('%d-%m-%Y'),
+                              'work_days': int(len(work_days)),
+                              'missing_days': missing_days}))
 
     def next_day(self, date):
         self.current_day = date
         self.day_hours = 0.0
 
     def print_daily_totals(self):
-        print("{} totals {:.2f} hours\n".format(self.current_day, self.day_hours))
+        print("{} totals {:.2f} hours\n".format(self.current_day,
+                                                self.day_hours))
+
 
 def main():
     arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
     ctt = CharmTimeTracking(arguments)
     ctt.processing_func()
+
 
 if __name__ == "__main__":
     main()
