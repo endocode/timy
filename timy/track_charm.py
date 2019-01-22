@@ -115,9 +115,14 @@ class CharmTimeTracking(object):
             self.redmine_api_access_key = d["api_key"]
             self.redmine = Redmine('https://tracker.endocode.com', key=self.redmine_api_access_key)
 
+            # load the mappings from the config file
             if not arguments['list']:
                 self.task_project_mapping = d["task_project_mapping"]
                 self.task_activity_mapping = d["task_activity_mapping"]
+                try:
+                    self.task_issue_mapping = d["task_issue_mapping"]
+                except KeyError:
+                    self.task_issue_mapping = {}
 
             if arguments['trackdb'] and not self.db_path:
                 try:
@@ -203,6 +208,7 @@ class CharmTimeTracking(object):
             if self.end_at_date and start_date > self.end_at_date:
                 return
 
+            # Look up project
             try:
                 self.project_cache[str(task_id)]
             except KeyError:
@@ -215,12 +221,21 @@ class CharmTimeTracking(object):
             time_entry = self.redmine.time_entry.new()
             time_entry.project_id = project.id
             time_entry.spent_on = start_date.date()
+
+            # Look up activity
             try:
                 activity_id = self.task_activity_mapping[str(task_id)]
                 time_entry.activity_id = activity_id
             except KeyError:
                 print("No activity id for taskid {}".format(task_id))
                 sys.exit(2)
+
+            # Look up redmine issue id
+            try:
+                time_entry.issue_id = self.task_issue_mapping[str(task_id)]
+            except KeyError:
+                pass
+
             print("-"*50)
             print("Date:\t\t{}".format(datetime.strftime(start_date, "%Y-%m-%d")))
             print("Project:\t{}".format(project.name))
@@ -229,6 +244,7 @@ class CharmTimeTracking(object):
             except KeyError:
                 activity = activity_id
             print("Activity:\t{}".format(activity))
+            print("Issue id:\t{}".format(time_entry.issue_id))
             rounded_dec_hours = float("{0:.2f}".format(dec_hours))
             print("Spent time:\t{}\tdecimal: {}".format(td,rounded_dec_hours))
             time_entry.hours = rounded_dec_hours
