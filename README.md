@@ -33,8 +33,14 @@ Welcome Redmine time trackers the time has come for you to not ever manually ent
             "<a CHARM TASK ID>": <corresponding Redmine activity ID>,
             "<a 2nd CHARM TASK ID>": <corresponding Redmine activity ID>
         },
+        "task_issue_mapping": {
+            "<a CHARM TASK ID>": <corresponding Redmine issue ID>,
+            "<a 2nd CHARM TASK ID>": <corresponding Redmine issue ID>
+        },
         "db_path": "/home/<username>/.local/share/KDAB/Charm/Charm.db"
         }
+
+    Unlike the mappings for project and activity, the issue mapping is optional.
 
     HINT: You can obtain the the Redmine Project/activity ids via timy. Just place the api key in the configuration and
 
