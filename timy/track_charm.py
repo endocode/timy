@@ -115,6 +115,11 @@ class CharmTimeTracking(object):
             self.redmine_api_access_key = d["api_key"]
             self.redmine = Redmine('https://tracker.endocode.com', key=self.redmine_api_access_key)
 
+            try:
+                self.contract_hours = float(d["contract_hours"])
+            except KeyError:
+                self.contract_hours = 40.0
+
             # load the mappings from the config file
             if not arguments['list']:
                 self.task_project_mapping = d["task_project_mapping"]
@@ -318,7 +323,7 @@ class CharmTimeTracking(object):
             to_day = date.today()
 
         work_days = numpy.busday_count(self.start_from_date, to_day + timedelta(days = 1))
-        required_hours = work_days * 8.0
+        required_hours = work_days * (self.contract_hours / 5)
         if self.verbose:
             print("total {:.2f} hours / required {} hours".format(summarized_hours, required_hours))
         print("balance: {:.2f} hours (since: {} # working days: {})".format(summarized_hours - required_hours, self.start_from_date, work_days))
