@@ -336,7 +336,7 @@ class CharmTimeTracking(object):
         print("{} totals {:.2f} hours\n".format(self.current_day, self.day_hours))
 
 def main():
-    arguments = docopt.docopt(__doc__, version='Charm2RedmineTT 0.1')
+    arguments = docopt.docopt(__doc__, version='Timy 0.4')
     ctt = CharmTimeTracking(arguments)
     ctt.processing_func()
 

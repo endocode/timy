@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='timy',
-    version='0.3',
+    version='0.4',
     description='Transfer charm time tracks to Redmine',
     long_description=long_description,
 
