@@ -143,7 +143,7 @@ class CharmTimeTracking(object):
             tracker_project_id = self.task_project_mapping[str(task_id)]
             self.project_cache[str(task_id)] = self.redmine.project.get(tracker_project_id)
         except KeyError:
-            print("Dafuq no project mapping for task {}".format(task_id))
+            print("no project mapping for task {}".format(task_id))
             sys.exit(1)
 
     def __cache_activities(self):
@@ -249,7 +249,16 @@ class CharmTimeTracking(object):
             except KeyError:
                 activity = activity_id
             print("Activity:\t{}".format(activity))
-            print("Issue id:\t{}".format(time_entry.issue_id))
+
+            if time_entry.issue_id:
+                try:
+                    issue_subject = self.redmine.issue.get(time_entry.issue_id).subject
+                except ResourceSetIndexError:
+                    print("invalid issue id {}".format(time_entry.issue_id))
+                    sys.exit(1)
+            else:
+                issue_subject = "No issue"
+            print("Issue:\t\t{}, id: {}".format(issue_subject, time_entry.issue_id))
             rounded_dec_hours = float("{0:.2f}".format(dec_hours))
             print("Spent time:\t{}\tdecimal: {}".format(td,rounded_dec_hours))
             time_entry.hours = rounded_dec_hours
